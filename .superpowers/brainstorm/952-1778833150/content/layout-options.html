@@ -1,0 +1,137 @@
+<h2>LightMark + AI 助手：面板布局方案对比</h2>
+<p class="subtitle">当前是 3 栏布局（行号 | 编辑区 | 预览区），AI 对话面板放在哪？</p>
+
+<div class="section">
+  <h3>当前布局（改造前）</h3>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">LightMark 当前：行号 | 编辑区 | 预览区</div>
+  <div class="mockup-body">
+    <div style="display:flex;height:360px;border:1px solid var(--color-border);border-radius:6px;overflow:hidden;background:var(--color-bg);">
+      <div class="mock-sidebar" style="width:40px;text-align:center;font-size:12px;color:var(--color-fg-muted);border-right:1px solid var(--color-border);">1<br>2<br>3<br>4<br>5</div>
+      <div class="mock-content" style="flex:1;border-right:1px solid var(--color-border);">
+        <div style="padding:12px;color:var(--color-fg-muted);font-size:13px;">
+          <span style="font-weight:bold;"># 标题</span><br>
+          这是编辑区<br>
+          输入 Markdown 内容<br><br>
+          <span style="color:var(--color-accent);">| 表格 | 数据 |</span><br>
+        </div>
+      </div>
+      <div class="mock-content" style="flex:1;background:#fafafa;">
+        <div style="padding:12px;font-size:13px;">
+          <h3 style="margin:0 0 8px 0;">标题</h3>
+          <p style="margin:0;font-size:12px;">这是预览区<br>渲染后的 HTML</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>三种 AI 面板布局方案</h3>
+  <p class="subtitle">参考 VS Code 中 Claude Code 的交互模式，AI 助手需要一个对话区域</p>
+</div>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>底部面板（推荐）</h3>
+      <p>编辑区下方新增可折叠的 AI 对话面板，类似 VS Code Terminal / Claude Code 面板</p>
+      <div class="mockup" style="margin-top:12px;">
+        <div class="mockup-header">布局：行号 | 编辑区 | 预览区（上方） + AI 对话面板（下方）</div>
+        <div class="mockup-body">
+          <div style="display:flex;flex-direction:column;height:260px;border:1px solid var(--color-border);border-radius:6px;overflow:hidden;background:var(--color-bg);">
+            <div style="display:flex;flex:1;">
+              <div class="mock-sidebar" style="width:30px;font-size:10px;text-align:center;border-right:1px solid var(--color-border);">1<br>2<br>3</div>
+              <div class="mock-content" style="flex:1;border-right:1px solid var(--color-border);padding:8px;font-size:11px;">编辑区</div>
+              <div class="mock-content" style="flex:1;padding:8px;font-size:11px;background:#fafafa;">预览区</div>
+            </div>
+            <div style="border-top:2px solid var(--color-accent);background:var(--color-bg);padding:8px 12px;font-size:11px;">
+              <div style="display:flex;justify-content:space-between;">
+                <span style="font-weight:bold;">🤖 AI 助手</span>
+                <span style="color:var(--color-fg-muted);">可折叠 ▾</span>
+              </div>
+              <div style="margin-top:4px;padding:6px 8px;background:#f0f4ff;border-radius:4px;font-size:11px;">AI: 要我帮你优化这段 Markdown 吗？</div>
+              <div style="margin-top:4px;display:flex;gap:8px;align-items:center;">
+                <span style="color:var(--color-fg-muted);font-size:10px;">▸</span>
+                <span style="color:var(--color-fg-muted);font-size:10px;">输入你的问题...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pros-cons" style="margin-top:12px;">
+        <div class="pros"><h4>Pros</h4><ul><li>不动现有 3 栏布局</li><li>可折叠，不干扰写作</li><li>最像 VS Code Claude Code 体验</li><li>宽幅显示，适合长对话</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>纵向空间被压缩</li><li>小屏幕体验不佳</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>右侧替换预览区（标签切换）</h3>
+      <p>预览区和 AI 对话区共用右侧面板，通过标签切换</p>
+      <div class="mockup" style="margin-top:12px;">
+        <div class="mockup-header">布局：行号 | 编辑区 | 预览 / AI（标签切换）</div>
+        <div class="mockup-body">
+          <div style="display:flex;height:260px;border:1px solid var(--color-border);border-radius:6px;overflow:hidden;">
+            <div class="mock-sidebar" style="width:30px;font-size:10px;text-align:center;border-right:1px solid var(--color-border);">1<br>2<br>3</div>
+            <div class="mock-content" style="flex:1;border-right:1px solid var(--color-border);padding:8px;font-size:11px;">编辑区</div>
+            <div class="mock-content" style="flex:1;padding:0;font-size:11px;display:flex;flex-direction:column;">
+              <div style="display:flex;border-bottom:1px solid var(--color-border);">
+                <div style="padding:4px 10px;background:var(--color-accent);color:white;font-size:10px;border-radius:3px 3px 0 0;">预览</div>
+                <div style="padding:4px 10px;font-size:10px;color:var(--color-fg-muted);">AI 助手</div>
+              </div>
+              <div class="mock-content" style="flex:1;padding:8px;font-size:10px;">🤖 AI 对话内容...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pros-cons" style="margin-top:12px;">
+        <div class="pros"><h4>Pros</h4><ul><li>不压缩纵向空间</li><li>空间利用率高</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>预览和 AI 不能同时看</li><li>频繁切换体验差</li><li>和"实时预览"核心功能冲突</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>独立浮动窗口</h3>
+      <p>AI 助手作为独立的 QDialog/QDockWidget，可拖拽到任意位置</p>
+      <div class="mockup" style="margin-top:12px;">
+        <div class="mockup-header">布局：主窗口不变 + AI 独立浮动窗口</div>
+        <div class="mockup-body" style="position:relative;height:260px;border:1px solid var(--color-border);border-radius:6px;overflow:hidden;background:var(--color-bg);">
+          <div style="display:flex;height:100%;">
+            <div class="mock-sidebar" style="width:30px;font-size:10px;text-align:center;border-right:1px solid var(--color-border);">1<br>2<br>3</div>
+            <div class="mock-content" style="flex:1;border-right:1px solid var(--color-border);padding:8px;font-size:11px;">编辑区</div>
+            <div class="mock-content" style="flex:1;padding:8px;font-size:11px;background:#fafafa;">预览区</div>
+          </div>
+          <div style="position:absolute;bottom:16px;right:16px;width:300px;background:var(--color-bg);border:2px solid var(--color-accent);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);font-size:11px;">
+            <div style="padding:8px 12px;border-bottom:1px solid var(--color-border);font-weight:bold;">🤖 AI 助手 ▸</div>
+            <div style="padding:8px 12px;height:80px;overflow:hidden;">AI: 需要我帮忙吗？</div>
+            <div style="padding:6px 12px;border-top:1px solid var(--color-border);color:var(--color-fg-muted);">输入消息...</div>
+          </div>
+        </div>
+      </div>
+      <div class="pros-cons" style="margin-top:12px;">
+        <div class="pros"><h4>Pros</h4><ul><li>最灵活，不挤占主窗口</li><li>多显示器友好</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>需要额外管理窗口生命周期</li><li>和主编辑器"一体化"体验弱</li><li>小屏幕下窗口叠窗口</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>推荐：方案 A（底部面板）</h3>
+  <p>理由：</p>
+  <ul>
+    <li>VS Code Claude Code 就是底部面板，用户心智一致</li>
+    <li>不破坏现有的 3 栏编辑体验</li>
+    <li>实现难度适中，用 QSplitter 纵向拆分即可</li>
+    <li>可折叠设计让用户按需打开</li>
+  </ul>
+</div>

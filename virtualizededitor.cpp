@@ -36,6 +36,7 @@ void VirtualizedEditor::setFullContent(const QString &content)
     verticalScrollBar()->setValue(0);
 }
 
+//每次变更内容QT自动调用重绘函数，做出重载处理
 void VirtualizedEditor::paintEvent(QPaintEvent *event)
 {
     QFontMetrics fm(font());
@@ -134,6 +135,11 @@ void VirtualizedEditor::onTextChanged()
 
     // 从完整文档提取可见区对应的行（精确对齐：文档第 N 行 = m_fullLines[N]）
     QStringList allDocLines = toPlainText().split('\n');
+    if (m_fullLines.isEmpty()) {
+        m_fullContent = toPlainText();
+        m_fullLines  = allDocLines;
+        return;
+    }
     const int buf = 2;
     int contentStart = qMax(0, m_visibleStartLine - buf);
     int contentEnd = qMin(m_fullLines.size() - 1, m_visibleEndLine + buf);

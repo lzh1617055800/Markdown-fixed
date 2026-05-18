@@ -22,6 +22,7 @@ find_package(Qt6  REQUIRED COMPONENTS
     Core
     Widgets
     PrintSupport
+    Network
 )
 
 # 5. 设置构建类型（Debug/Release）
@@ -64,6 +65,11 @@ set(SOURCES
     appsettings.cpp
     diffrenderer.cpp
     virtualizededitor.cpp
+    chatbubble.cpp          # ← 新增
+    chatmodel.cpp           # ← 新增
+    chatpanel.cpp           # ← 新增
+    deepseekclient.cpp      # ← 新增
+    contextbuilder.cpp      # ← 新增
     ${RESOURCE_SOURCES}
 )
 set(HEADERS
@@ -75,6 +81,12 @@ set(HEADERS
     appsettings.h
     diffrenderer.h
     virtualizededitor.h
+    chatbubble.h            # ← 新增
+    chatmodel.h             # ← 新增
+    aiclient.h              # ← 新增
+    chatpanel.h             # ← 新增
+    deepseekclient.h        # ← 新增
+    contextbuilder.h        # ← 新增
 )
 set(UIS
     mainwindow.ui
@@ -86,6 +98,7 @@ qt_add_executable(MarkdownEditor
     ${SOURCES}
     ${HEADERS}
     ${UIS}
+
 )
 
 # 10. 链接 Qt 库
@@ -94,6 +107,7 @@ target_link_libraries(MarkdownEditor
         Qt6::Core
         Qt6::Widgets
         Qt6::PrintSupport
+        Qt6::Network
 )
 
 # 11. 安装和部署（可选）

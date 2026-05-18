@@ -16,6 +16,9 @@ class AppSettings;
 class DiffRenderer;
 class VirtualizedEditor;
 
+class ChatPanel;
+class DeepSeekClient;
+
 class QLineEdit;
 class QCheckBox;
 
@@ -64,8 +67,11 @@ private slots:
     void updateWordCount();
     void showFindDialog();
 
+    void toggleAIPanel();
+
 private:
     void setupUI();
+    void setupAIPanel();
     void setupMenu();
     void setupToolBar();
     void setupStatusBar();
@@ -90,6 +96,7 @@ private:
                     bool caseSensitive = false, bool wholeWord = false);
 
     // UI组件
+    QSplitter *m_verticalSplitter;
     QSplitter *m_splitter;
     QTextEdit *m_editor;
     QTextEdit *m_preview;
@@ -161,6 +168,11 @@ private:
     bool m_diffRenderEnabled = true;
     QString m_lastPreviewHtml;
     QTimer *m_updateTimer;
+
+    ChatPanel      *m_chatPanel = nullptr;
+    DeepSeekClient *m_aiClient  = nullptr;
+    QAction        *m_toggleAIAction = nullptr;
+    bool            m_aiPanelVisible = true;
 };
 
 #endif // MAINWINDOW_H

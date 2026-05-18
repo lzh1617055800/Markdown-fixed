@@ -5,6 +5,10 @@
 #include "diffrenderer.h"
 #include "virtualizededitor.h"
 #include "fileencodingdetector.h"
+//AI
+#include "chatpanel.h"
+#include "deepseekclient.h"
+
 #include <QSplitter>
 #include <QTextEdit>
 #include <QMenuBar>
@@ -218,11 +222,32 @@ void MainWindow::setupUI()
     m_splitter->setSizes({100, 500, 500});
     m_splitter->setHandleWidth(2);
 
+    setupAIPanel();
+    m_verticalSplitter = new QSplitter(Qt::Vertical,this);
+    m_verticalSplitter->addWidget(m_splitter);
+    m_verticalSplitter->addWidget(m_chatPanel);
+    m_verticalSplitter->setStretchFactor(0,3);
+    m_verticalSplitter->setStretchFactor(1,1);
+    m_verticalSplitter->setHandleWidth(2);
+
     // 设置中心部件
-    setCentralWidget(m_splitter);
+    setCentralWidget(m_verticalSplitter);
 
     // 初始化行号显示
     updateLineNumbers();
+}
+
+void MainWindow::setupAIPanel()
+{
+    m_aiClient = new DeepSeekClient(this);
+    m_chatPanel = new ChatPanel(m_aiClient, this);
+}
+
+void MainWindow::toggleAIPanel()
+{
+    m_aiPanelVisible = !m_aiPanelVisible;
+    m_chatPanel->setVisible(m_aiPanelVisible);
+    m_toggleAIAction->setChecked(m_aiPanelVisible);
 }
 
 void MainWindow::setupMenu()
@@ -357,6 +382,12 @@ void MainWindow::setupMenu()
     m_toggleDarkThemeAction->setCheckable(true);
     m_toggleDarkThemeAction->setChecked(false);
     m_viewMenu->addAction(m_toggleDarkThemeAction);
+
+    m_toggleAIAction = new QAction("AI 助手(&I)", this);
+    m_toggleAIAction->setStatusTip("显示/隐藏 AI 写作助手");
+    m_toggleAIAction->setCheckable(true);
+    m_toggleAIAction->setChecked(true);
+    m_viewMenu->addAction(m_toggleAIAction);
 
     QAction *toggleDiffAction = new QAction("启用差分渲染(&D)", this);
     toggleDiffAction->setCheckable(true);
@@ -519,6 +550,7 @@ void MainWindow::setupConnections()
     connect(m_toggleWordWrapAction, &QAction::triggered, this, &MainWindow::toggleWordWrap);
     connect(m_toggleSyntaxHighlightAction, &QAction::triggered, this, &MainWindow::toggleSyntaxHighlight);
     connect(m_toggleDarkThemeAction, &QAction::triggered, this, &MainWindow::toggleDarkTheme);
+    connect(m_toggleAIAction,&QAction::triggered, this, &MainWindow::toggleAIPanel);
     connect(m_findAction, &QAction::triggered, this, &MainWindow::showFindDialog);
     connect(m_replaceAction, &QAction::triggered, this, &MainWindow::replace);
 }
@@ -810,7 +842,11 @@ void MainWindow::about()
 }
 
 void MainWindow::updatePreview()
-{
+{ 
+    if (m_chatPanel) {
+        m_chatPanel->setDocumentContent(editorFullContent());
+    }
+
     QString markdownText = editorFullContent();
     QString html;
 

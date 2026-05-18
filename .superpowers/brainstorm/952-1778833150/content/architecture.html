@@ -1,0 +1,193 @@
+<h2>AI 助手系统架构</h2>
+<p class="subtitle">先 Mock 后真实 API，骨架先行</p>
+
+<div class="section">
+  <h3>整体架构：新增 4 个模块</h3>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">模块关系图</div>
+  <div class="mockup-body">
+    <div style="font-family:monospace;font-size:12px;line-height:1.8;padding:16px;">
+      <div style="display:flex;justify-content:center;gap:48px;flex-wrap:wrap;">
+
+        <div style="text-align:center;">
+          <div style="border:2px solid var(--color-accent);border-radius:8px;padding:16px 20px;background:#f8f9ff;">
+            <div style="font-weight:bold;margin-bottom:6px;">┌─ MainWindow ─┐</div>
+            <div style="font-size:10px;color:var(--color-fg-muted);">拆分 QSplitter<br>管理 4 个面板</div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:20px;text-align:center;font-size:18px;justify-content:center;">
+          <span style="color:var(--color-accent);">▼ 持有</span>
+          <span style="color:var(--color-accent);">▼ 持有</span>
+          <span style="color:var(--color-accent);">▼ 持有</span>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px;">
+
+          <div style="border:2px solid var(--color-border);border-radius:8px;padding:10px 16px;">
+            <div style="font-weight:bold;font-size:11px;">ChatPanel</div>
+            <div style="font-size:10px;color:var(--color-fg-muted);">UI 组件：对话气泡<br>消息列表 + 输入框<br>打字机流式渲染</div>
+          </div>
+
+          <div style="border:2px solid var(--color-border);border-radius:8px;padding:10px 16px;">
+            <div style="font-weight:bold;font-size:11px;">ChatModel</div>
+            <div style="font-size:10px;color:var(--color-fg-muted);">数据层：消息存储<br>对话历史管理<br>角色+时间戳+状态</div>
+          </div>
+
+          <div style="border:2px solid var(--color-border);border-radius:8px;padding:10px 16px;">
+            <div style="font-weight:bold;font-size:11px;">AiClient</div>
+            <div style="font-size:10px;color:var(--color-fg-muted);">抽象接口：发送消息<br>MockAiClient → StreamAiClient<br>信号驱动异步回调</div>
+          </div>
+
+          <div style="border:2px solid var(--color-border);border-radius:8px;padding:10px 16px;">
+            <div style="font-weight:bold;font-size:11px;">ContextBuilder</div>
+            <div style="font-size:10px;color:var(--color-fg-muted);">上下文构造器<br>拼接系统提示词+文档内容<br>管理 token 预算</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>这 4 个模块各干什么</h3>
+</div>
+
+<div class="cards">
+
+  <div class="card">
+    <div class="card-body">
+      <h3>1. ChatPanel（UI 层）</h3>
+      <p>QWidget，嵌在 QSplitter 底部。职责只有一件事：<strong>显示对话和捕获输入</strong>。</p>
+      <ul style="font-size:13px;">
+        <li>内部用 QScrollArea + 多个 ChatBubble（自定义 QWidget）展示消息</li>
+        <li>每个气泡有"角色"（用户/AI）、"状态"（等待中/流式中/完成）</li>
+        <li>输入框 + 发送按钮，Ctrl+Enter 快捷发送</li>
+        <li>收到 AiClient 的流式信号时，追加重绘当前气泡</li>
+        <li><strong>不知道任何 HTTP/API 细节</strong></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <h3>2. ChatModel（数据层）</h3>
+      <p>存消息列表和对话状态，纯数据类，不依赖 Qt Widget。</p>
+      <ul style="font-size:13px;">
+        <li>消息结构体：角色（User/Assistant/System）、内容、时间戳、状态</li>
+        <li>对话历史 List<Message>，用于发给 AI 做上下文</li>
+        <li>支持清空、导出（Markdown 格式）</li>
+        <li><strong>和 UI 完全解耦</strong></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <h3>3. AiClient（抽象接口）</h3>
+      <p>定义统一的 AI 调用接口，Mock 和真实实现都继承它。</p>
+      <ul style="font-size:13px;">
+        <li>纯虚基类，定义 <code>sendMessage(QString userText)</code></li>
+        <li>信号：<code>streamChunk(QString chunk)</code> / <code>responseDone()</code> / <code>errorOccurred(QString)</code></li>
+        <li>MockAiClient：用 QTimer 模拟打字机效果，一行一行吐出预置文本</li>
+        <li>StreamAiClient（后期）：用 QNetworkAccessManager 发 HTTPS POST 到 API，逐行解析 SSE</li>
+        <li><strong>替换后端时只改这一个地方</strong></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <h3>4. ContextBuilder</h3>
+      <p>把编辑器的当前内容 + 用户问题拼成 AI 能理解的消息。</p>
+      <ul style="font-size:13px;">
+        <li>System 角色：固定提示词（"你是一个 Markdown 写作助手..."）</li>
+        <li>User 角色：当前文档全文 + 用户的问题</li>
+        <li>剪裁策略：文档太长时截断，优先保留开头和光标附近</li>
+        <li>预置快捷操作："帮我优化这段文字"、"检查语法错误"、"翻译成英文"</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<div class="section">
+  <h3>数据流：用户发一条消息的完整路径</h3>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">点击"发送"后的调用链</div>
+  <div class="mockup-body">
+    <div style="font-family:monospace;font-size:11px;line-height:2.2;padding:16px;color:var(--color-fg);">
+
+      <div>1. ChatPanel 捕获输入，创建用户 Message，追加到 ChatModel</div>
+
+      <div style="margin-left:16px;color:var(--color-fg-muted);">↓</div>
+
+      <div>2. ContextBuilder::build(userMessage) 拼接完整的消息数组</div>
+      <div style="margin-left:32px;font-size:10px;color:var(--color-fg-muted);">→ system("你是 Markdown 写作助手") + user("文档全文: ...\n问题: 帮我优化段落")</div>
+
+      <div style="margin-left:16px;color:var(--color-fg-muted);">↓</div>
+
+      <div>3. AiClient::sendMessage(messages) 发送消息</div>
+      <div style="margin-left:32px;font-size:10px;color:var(--color-fg-muted);">Mock: QTimer 250ms 间隔逐字发出 streamChunk 信号</div>
+      <div style="margin-left:32px;font-size:10px;color:var(--color-fg-muted);">Real: QNetworkAccessManager HTTP POST → 解析 SSE → emit streamChunk</div>
+
+      <div style="margin-left:16px;color:var(--color-fg-muted);">↓</div>
+
+      <div>4. ChatPanel 接收 streamChunk 信号，追加文本到当前气泡，自动滚动</div>
+
+      <div style="margin-left:16px;color:var(--color-fg-muted);">↓</div>
+
+      <div>5. responseDone 信号触发，气泡标记为"完成"，消息写入 ChatModel</div>
+
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>核心挑战：流式打字机效果怎么实现</h3>
+  <p>这是整个 AI 面板体验最关键的技术点。用户应该看到 AI 的回复<strong>一个字一个字出来</strong>，而不是等 5 秒后突然蹦出一大段。</p>
+</div>
+
+<div class="cards">
+
+  <div class="card">
+    <div class="card-body">
+      <h3>Mock 阶段：QTimer 模拟</h3>
+      <ul style="font-size:13px;">
+        <li>预设一段完整回复文本，存为 QStringList（按句拆分）</li>
+        <li>QTimer 每 200-300ms 触发一次，取下一句，emit streamChunk</li>
+        <li>ChatPanel 收到 chunk 后 <strong>append</strong> 到当前 AI 气泡的 QLabel</li>
+        <li>定时器耗尽所有句子后 emit responseDone</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <h3>真实 API 阶段：SSE 流解析</h3>
+      <ul style="font-size:13px;">
+        <li>Anthropic API 返回 <code>text/event-stream</code></li>
+        <li>QNetworkReply::readyRead 信号每次有数据到达时触发</li>
+        <li>增量解析 SSE 行：<code>data: {"type":"content_block_delta","delta":{"text":"一段"}}</code></li>
+        <li>提取 delta.text，emit streamChunk</li>
+        <li><strong>关键</strong>：不阻塞 UI 线程——网络回调在 Qt 事件循环里异步执行</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<div class="section">
+  <h3>下一步讨论的具体问题</h3>
+  <ol>
+    <li>ChatPanel 的气泡 UI 怎么画？（QLabel + 样式表 vs QTextBrowser？）</li>
+    <li>对话历史保存到哪？（QSettings / JSON 文件 / 不保存？）</li>
+    <li>预设哪些快捷操作按钮？（"润色"、"翻译"、"总结"、"扩写"）</li>
+    <li>Markdown 渲染：AI 回复里的代码块要不要高亮？</li>
+  </ol>
+</div>
