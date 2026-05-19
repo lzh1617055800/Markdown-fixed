@@ -54,52 +54,57 @@ if(RESOURCE_FILES)
     qt_add_resources(RESOURCE_SOURCES ${RESOURCE_FILES})
 endif()
 
-# 8. 源文件和头文件
+# 8. 头文件路径
+set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+# 9. 源文件和头文件
 set(SOURCES
-    main.cpp
-    mainwindow.cpp
-    markdownparser.cpp
-    markdownhighlighter.cpp
-    editorhighlighter.cpp
-    fileencodingdetector.cpp
-    appsettings.cpp
-    diffrenderer.cpp
-    virtualizededitor.cpp
-    chatbubble.cpp          # ← 新增
-    chatmodel.cpp           # ← 新增
-    chatpanel.cpp           # ← 新增
-    deepseekclient.cpp      # ← 新增
-    contextbuilder.cpp      # ← 新增
+    src/main.cpp
+    src/mainwindow.cpp
+    src/markdownparser.cpp
+    src/markdownhighlighter.cpp
+    src/editorhighlighter.cpp
+    src/fileencodingdetector.cpp
+    src/appsettings.cpp
+    src/diffrenderer.cpp
+    src/virtualizededitor.cpp
+    src/chatbubble.cpp
+    src/ChatModel.cpp
+    src/chatpanel.cpp
+    src/deepseekclient.cpp
+    src/contextbuilder.cpp
     ${RESOURCE_SOURCES}
 )
 set(HEADERS
-    mainwindow.h
-    markdownparser.h
-    markdownhighlighter.h
-    editorhighlighter.h
-    fileencodingdetector.h
-    appsettings.h
-    diffrenderer.h
-    virtualizededitor.h
-    chatbubble.h            # ← 新增
-    chatmodel.h             # ← 新增
-    aiclient.h              # ← 新增
-    chatpanel.h             # ← 新增
-    deepseekclient.h        # ← 新增
-    contextbuilder.h        # ← 新增
+    include/mainwindow.h
+    include/markdownparser.h
+    include/markdownhighlighter.h
+    include/editorhighlighter.h
+    include/fileencodingdetector.h
+    include/appsettings.h
+    include/diffrenderer.h
+    include/virtualizededitor.h
+    include/chatbubble.h
+    include/ChatModel.h
+    include/aiclient.h
+    include/chatpanel.h
+    include/deepseekclient.h
+    include/contextbuilder.h
 )
 set(UIS
-    mainwindow.ui
+    src/mainwindow.ui
 )
 
-# 9. 创建可执行文件
+# 10. 创建可执行文件
 qt_add_executable(MarkdownEditor
     WIN32 MACOSX_BUNDLE
     ${SOURCES}
     ${HEADERS}
     ${UIS}
-
 )
+
+# 头文件搜索路径（让 #include "foo.h" 能找到 include/foo.h）
+target_include_directories(MarkdownEditor PRIVATE ${INCLUDE_DIR})
 
 # 10. 链接 Qt 库
 target_link_libraries(MarkdownEditor

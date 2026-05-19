@@ -1,25 +1,97 @@
-# LightMark — 跨平台 Markdown 编辑器
+# LightMark — 跨平台 Markdown 编辑器（集成 AI 写作助手）
 
-基于 **Qt6 + C++17** 的桌面 Markdown 编辑器，支持 Windows/Linux。
+基于 **Qt6 + C++17** 的桌面 Markdown 编辑器，支持 Windows/Linux 跨平台。内置 DeepSeek AI 助手，可进行自然语言对话、文档润色、翻译等操作。
 
 ## 功能
 
-- **Markdown 语法**：标题、粗体、斜体、行内代码、代码块、链接、图片、无序/有序列表、表格、引用
-- **实时预览**：编辑区输入，预览区同步渲染，亮色/暗色主题切换
-- **虚拟化编辑**：万行级大文档流畅编辑，只渲染可见区域
-- **差分渲染**：编辑时保持预览区滚动位置不跳回顶部
-- **查找替换**：支持大小写、全字匹配
-- **编码检测**：自动识别 UTF-8/UTF-16/GBK 编码
-- **导出**：HTML / PDF 导出
-- **自动保存**：30 秒间隔 + 崩溃恢复
+### 编辑与预览
+- **Markdown 语法**：标题、粗体/斜体、行内代码、代码块、链接、图片、列表、表格、引用
+- **实时预览**：编辑区输入 → 预览区同步渲染 HTML，亮色/暗色主题切换
+- **虚拟化编辑**：QTextDocument 仅承载可见行附近文本，内存维护全文模型，大文档流畅滚动
+- **差分变更追踪**：记录文档变化行，配合防抖刷新保持预览滚动位置
+- **语法高亮**：编辑区 QSyntaxHighlighter + 预览区 CSS 主题，支持明暗切换
+
+### 文件与编码
+- **多编码检测**：自动识别 UTF-8 / UTF-16（LE/BE）/ GBK，避免中文乱码
+- **自动保存**：30 秒间隔 + 崩溃恢复检测
+- **HTML / PDF 导出**
+
+### AI 写作助手
+- **自由对话**：底部面板一问一答，支持多轮对话
+- **打字机效果**：SSE 流式响应逐字渲染
+- **快捷操作**：润色、扩写、翻译英文、总结（点击填入提示词，可自由修改）
+- **可替换后端**：基于 AiClient 抽象接口，当前接入 DeepSeek API（OpenAI 兼容格式），可替换为 GPT / 文心一言等
+
+## 项目结构
+
+```
+├── include/                    # 头文件
+│   ├── mainwindow.h            # 主窗口
+│   ├── markdownparser.h        # Markdown → HTML 正则流水线解析器
+│   ├── markdownhighlighter.h   # 预览区高亮（CSS主题）
+│   ├── editorhighlighter.h     # 编辑区语法高亮（QSyntaxHighlighter）
+│   ├── virtualizededitor.h     # 虚拟化编辑器（仅渲染可见行）
+│   ├── diffrenderer.h          # 文档变更行追踪
+│   ├── fileencodingdetector.h  # 文件编码检测（UTF-8/16/GBK）
+│   ├── appsettings.h           # 配置持久化 + 自动保存恢复
+│   ├── chatbubble.h            # 对话气泡 Widget
+│   ├── ChatModel.h             # 对话历史数据模型
+│   ├── aiclient.h              # AI 客户端抽象接口
+│   ├── deepseekclient.h        # DeepSeek API 客户端（SSE 流）
+│   ├── chatpanel.h             # AI 助手底部面板
+│   └── contextbuilder.h        # AI 上下文构造器
+│
+├── src/                        # 源文件
+│   ├── main.cpp                # 入口
+│   ├── mainwindow.cpp          # 主窗口（UI 组装 + 业务逻辑）
+│   ├── markdownparser.cpp      # Markdown 解析实现
+│   ├── markdownhighlighter.cpp
+│   ├── editorhighlighter.cpp
+│   ├── virtualizededitor.cpp   # 虚拟化编辑实现
+│   ├── diffrenderer.cpp
+│   ├── fileencodingdetector.cpp
+│   ├── appsettings.cpp
+│   ├── chatbubble.cpp          # 气泡 UI 实现
+│   ├── ChatModel.cpp           # 对话历史实现
+│   ├── deepseekclient.cpp      # API 调用 + SSE 解析实现
+│   ├── chatpanel.cpp           # AI 面板实现
+│   ├── contextbuilder.cpp      # 上下文构造实现
+│   └── mainwindow.ui           # Qt UI 布局文件
+│
+├── docs/                       # 开发文档
+├── CMakeLists.txt              # CMake 构建配置
+└── README.md                   # 本文件
+```
+
+## 架构
+
+```
+┌────────────────────────────────────────────────────────┐
+│  MainWindow                                            │
+│  ┌──────────────────────────────────────────────────┐ │
+│  │  QSplitter (横向): 行号 | VirtualizedEditor | 预览 │ │
+│  └──────────────────────────────────────────────────┘ │
+│  ┌──────────────────────────────────────────────────┐ │
+│  │  ChatPanel: [润色][扩写][翻译][总结]              │ │
+│  │  气泡列表 (QScrollArea)                           │ │
+│  │  输入框 + 发送按钮                                │ │
+│  └──────────────────────────────────────────────────┘ │
+└────────────────────────────────────────────────────────┘
+
+数据流:
+  用户输入 → ChatPanel → ContextBuilder（拼接上下文）
+    → DeepSeekClient（HTTPS POST + SSE 解析）
+    → streamChunk 信号 → ChatPanel 逐字渲染气泡
+    → responseDone → 历史存入 ChatModel
+```
 
 ## 构建
 
 ### 依赖
 
-- Qt 6.2+ (Core, Widgets, PrintSupport)
-- CMake 3.19+
-- C++17 编译器 (MSVC 2019+ / GCC 9+ / Clang 10+)
+- **Qt 6.2+**（Core / Widgets / PrintSupport / Network）
+- **CMake 3.19+**
+- **C++17** 编译器（MSVC 2019+ / GCC 9+ / Clang 10+）
 
 ### 编译
 
@@ -31,39 +103,13 @@ cmake .. -DCMAKE_PREFIX_PATH=/path/to/Qt/6.x.x/gcc_64
 cmake --build .
 ```
 
-Windows 下可直接用 Qt Creator 打开 `CMakeLists.txt`。
+Windows 下用 Qt Creator 打开 `CMakeLists.txt` 直接编译。
 
-## 项目结构
+### 配置 AI 助手
 
-```
-├── main.cpp                    # 入口
-├── mainwindow.h/cpp            # 主窗口，UI组装+业务逻辑 (Bug修复核心)
-├── markdownparser.h/cpp        # Markdown→HTML 正则流水线解析引擎
-├── editorhighlighter.h/cpp     # 编辑区语法高亮 (QSyntaxHighlighter)
-├── virtualizededitor.h/cpp     # 虚拟化编辑区 (只渲染可见行)
-├── diffrenderer.h/cpp          # 文档变化行号追踪
-├── fileencodingdetector.h/cpp  # 文件编码检测 (UTF-8/16/GBK)
-├── appsettings.h/cpp           # 配置持久化+崩溃恢复
-└── CMakeLists.txt              # CMake 构建配置
-```
-
-## 架构
-
-```
-┌──────────┬──────────────────┬──────────────────┐
-│ 行号区域  │  编辑区           │  预览区           │
-│ QTextEdit │  VirtualizedEditor│  QTextEdit       │
-│ (只读)    │  (可编辑)         │  (只读)           │
-└──────────┴──────────────────┴──────────────────┘
-```
-
-- **编辑区**：VirtualizedEditor 继承 QTextEdit，内存中维护全文 (`m_fullContent`)，QTextDocument 只存可见区窗口。滚动时从全文切出新可见区。
-- **预览区**：MarkdownParser 正则流水线转 HTML → 包裹主题 CSS → `setHtml()` 渲染。
-- **数据流**：`用户编辑 → onTextChanged 合并回全文 → 200ms 防抖 → updatePreview 全量解析 → updateWordCount`
-
-## Bug 修复记录
-
-本项目经历了系统性的 Bug 分析修复，详细记录见 [面试准备.md](面试准备.md) 和 [BUG_ANALYSIS.md](BUG_ANALYSIS.md)。
+1. 注册 [DeepSeek 开放平台](https://platform.deepseek.com)，获取 API Key
+2. 在可执行文件同目录下创建 `deepseek_key.conf`，写入 API Key（一行纯文本）
+3. 启动程序，菜单 View → AI 助手打开面板
 
 ## License
 

@@ -560,7 +560,11 @@ void MainWindow::setupConnections()
 void MainWindow::newFile()
 {
     if (maybeSave()) {
-        m_editor->clear();
+        if (auto *vEditor = dynamic_cast<VirtualizedEditor*>(m_editor)) {
+            vEditor->setFullContent("");
+        } else {
+            m_editor->clear();
+        }
         setCurrentFile("");
         m_isFirstPreviewRender = true; // Bug 5修复：新文件首次渲染标记重置
         m_statusLabel->setText("已创建新文件");
